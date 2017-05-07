@@ -1,21 +1,13 @@
 package sample;
 
-import javafx.animation.AnimationTimer;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.paint.Color;
-import javafx.stage.Stage;
+import javafx.scene.layout.VBox;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -23,9 +15,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.ResourceBundle;
 import java.util.Scanner;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class Controller implements Initializable {
 
@@ -33,59 +23,66 @@ public class Controller implements Initializable {
     private Button button;
 
     @FXML
-    private AnchorPane anchorPane;
+    private VBox vBox;
 
     @FXML
-    private LineChart<Double, Double> lineChart;
+    private LineChart<Number, Number> lineChart1;
+    @FXML
+    private NumberAxis xAxis1;
+    @FXML
+    private NumberAxis yAxis1;
 
     @FXML
-    private NumberAxis xAxis;
-
+    private LineChart<Number, Number> lineChart2;
     @FXML
-    private NumberAxis yAxis;
+    private NumberAxis xAxis2;
+    @FXML
+    private NumberAxis yAxis2;
 
     private GraphicsContext gc;
-    private Stage stage;
     private static Scanner in;
     public int n_channels;
     private Drawer drawer;
     private final int MAX_DATA_POINTS = 50;
-    //private ConcurrentLinkedQueue<Double> dataQ = new ConcurrentLinkedQueue<>();
-    private ArrayList<ConcurrentLinkedQueue<Double>> data = new ArrayList<>();
     private int xSeriesData = 0;
     private ExecutorService executor;
-    private final int tick = 2000;
+    private final int tick = 50;
+
+    private ArrayList<ArrayList<Double>> values = new ArrayList<>();
+    private ArrayList<ArrayList<Double>> average = new ArrayList<>();
+    private int window = 50;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-
-        anchorPane.widthProperty().addListener(new ChangeListener<Number>() {
+/*
+        vBox.widthProperty().addListener(new ChangeListener<Number>() {
             @Override
             public void changed(ObservableValue<? extends Number> observableValue, Number oldSceneWidth, Number newSceneWidth) {
-                lineChart.setMaxWidth(newSceneWidth.doubleValue() - 40);
+                lineChart1.setMaxWidth((newSceneWidth.doubleValue() - 40)/2);
             }
         });
-        anchorPane.heightProperty().addListener(new ChangeListener<Number>() {
+        vBox.heightProperty().addListener(new ChangeListener<Number>() {
             @Override
             public void changed(ObservableValue<? extends Number> observableValue, Number oldSceneHeight, Number newSceneHeight) {
-                lineChart.setMaxHeight(newSceneHeight.doubleValue() - 60);
+                lineChart1.setMaxHeight((newSceneHeight.doubleValue() - 60)/2);
             }
         });
-
+*/
         initValues();
+        countAverage();
+        n_channels = 2;
         initChart();
-        for (int i = 0; i < n_channels; i++) {
-            data.add(new ConcurrentLinkedQueue<>());
-        }
-
+/*
         //-- Prepare Executor Services
         executor = Executors.newCachedThreadPool();
-        AddToQueue addToQueue = new AddToQueue(data, executor, tick);
+        AddToQueue addToQueue = new AddToQueue(data, executor);
         executor.execute(addToQueue);
         //-- Prepare Timeline
         prepareTimeline();
-    }
+        */
 
+    }
+/*
     private void addDataToSeries() {
         XYChart.Series series;
         ConcurrentLinkedQueue<Double> dataQ;
@@ -110,57 +107,111 @@ public class Controller implements Initializable {
     private void prepareTimeline() {
         // Every frame to take any data from queue and add to chart
         new AnimationTimer() {
-            @Override public void handle(long now) {
-                addDataToSeries();
+            private long lastUpdate = 0;
+
+            @Override
+            public void handle(long now) {
+                if (now - lastUpdate >= 50_000_000) {
+                    addDataToSeries();
+                    lastUpdate = now;
+                }
             }
         }.start();
     }
-
-    public void setStage(Stage stage) {
-        this.stage = stage;
-    }
-
+*/
     private void initValues() {
-        File f = new File("/media/kano_vas/Windows8_OS/kano/university/diplom/ADHD_VCPT_EOEC/ADHD_VCPT_Ref_ASCII/D0000003.txt");
+
+        File f = new File("./data/D0000003.txt");
         try {
             in = new Scanner(f);
         } catch (FileNotFoundException e) {
             e.getMessage();
             //logger here
         }
-        ArrayList<ArrayList<Double>> values = new ArrayList<>();
-        int i = 0;
+
+        if (in.hasNext()) {
+            String[] val = in.nextLine().replaceFirst("[ \t]+", "").split("[ \t]+");
+            n_channels = val.length;
+            for (int j = 0; j < n_channels; j++) {
+                values.add(new ArrayList<>());
+                values.get(j).add(Double.parseDouble(val[j]));
+            }
+        }
         while (in.hasNext()) {
-            values.add(new ArrayList<>());
             String str = in.nextLine();
             String[] val = str.replaceFirst("[ \t]+", "").split("[ \t]+");
 
-            for (String v : val) {
-                double z = Double.parseDouble(v);
+            for (int i = 0; i < val.length; i++) {
+                double z = Double.parseDouble(val[i]);
                 values.get(i).add(z);
             }
-            i++;
         }
-        if (i == 0) {
-            //throw here
+
+        System.out.println("channels " + n_channels);
+    }
+
+    private void countAverage() {
+
+        for (int i = 0; i < values.size(); i++) {
+            ArrayList<Double> channel = values.get(i);
+            ArrayList<Double> channelAvg = new ArrayList<>();
+            double currentSum = 0;
+            for (int j = 0; j < channel.size(); j++) {
+                if (j < window) {
+                    currentSum+=channel.get(j);
+                    channelAvg.add(0.);
+                }
+                else {
+                    currentSum += channel.get(j) - channel.get(j-window);
+                    channelAvg.add(currentSum/window);
+                }
+            }
+            average.add(channelAvg);
         }
-        n_channels = values.get(0).size();
-        System.out.println("Rows " + i + "; channels " + n_channels);
     }
 
     private void initChart() {
-        xAxis.setLowerBound(0);
+        /*xAxis.setLowerBound(0);
         xAxis.setUpperBound(MAX_DATA_POINTS);
         xAxis.setTickUnit(MAX_DATA_POINTS / 10);
-        xAxis.setForceZeroInRange(false);
-        xAxis.setAutoRanging(false);
-        yAxis.setAutoRanging(true);
+        xAxis.setForceZeroInRange(false);*/
+        xAxis1.setAutoRanging(false);
+        yAxis1.setAutoRanging(true);
+        xAxis2.setAutoRanging(false);
+        yAxis2.setAutoRanging(true);
 
-        lineChart.setAnimated(false);
-        for (int i = 0; i < n_channels; i++) {
-            XYChart.Series series = new LineChart.Series<Double, Double>();
-            series.setName((i + 1) + " channel");
-            lineChart.getData().add(series);
+        int begin = 2000;
+        int end = 2200;
+        xAxis1.setLowerBound(begin);
+        xAxis1.setUpperBound(end);
+        xAxis2.setLowerBound(begin);
+        xAxis2.setUpperBound(end);
+
+        lineChart1.setAnimated(false);
+        int i = 0;
+        XYChart.Series series = new LineChart.Series<Double, Double>();
+        XYChart.Series seriesAvg = new LineChart.Series<Double, Double>();
+        series.setName((i + 1) + " channel");
+        seriesAvg.setName((i + 1) + " channel average");
+        for (int j = begin; j < end && j < values.get(i).size(); j++) {
+            series.getData().add(new XYChart.Data(j, values.get(i).get(j)));
+            seriesAvg.getData().add(new XYChart.Data(j, average.get(i).get(j)));
         }
+        lineChart1.getData().add(series);
+        lineChart1.getData().add(seriesAvg);
+
+        lineChart2.setAnimated(false);
+        i = 1;
+        XYChart.Series series2 = new LineChart.Series<Double, Double>();
+        XYChart.Series series2Avg = new LineChart.Series<Double, Double>();
+        series2.setName((i + 1) + " channel");
+        series2Avg.setName((i + 1) + " channel average");
+        for (int j = begin; j < end && j < values.get(i).size(); j++) {
+            series2.getData().add(new XYChart.Data(j, values.get(i).get(j)));
+            series2Avg.getData().add(new XYChart.Data(j, average.get(i).get(j)));
+        }
+        lineChart2.getData().add(series2);
+        lineChart2.getData().add(series2Avg);
+
     }
 }

@@ -15,13 +15,12 @@ public class Main extends Application {
         FXMLLoader loader = new FXMLLoader(Main.class.getResource("sample.fxml"));
         page = loader.load();
         Controller controller = loader.getController();
-        primaryStage.setResizable(false);
-        Scene scene = new Scene(page, 420, 420);
+        //primaryStage.setResizable(false);
+        Scene scene = new Scene(page, 1040, 900);
         primaryStage.setTitle("eeg viewer");
         primaryStage.setScene(scene);
         primaryStage.show();
-        controller.setStage(primaryStage);
-        primaryStage.setResizable(true);
+        //primaryStage.setResizable(true);
     }
 
 

@@ -10,6 +10,7 @@ import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.chart.Axis;
 import javafx.scene.chart.LineChart;
+import javafx.scene.chart.NumberAxis;
 import javafx.scene.shape.LineTo;
 import javafx.scene.shape.MoveTo;
 import javafx.scene.shape.Path;
@@ -38,6 +39,12 @@ public class StackedLineChart<X,Y> extends LineChart<X,Y> {
 
     }
 
+    //Constructors
+
+    public StackedLineChart() {
+        super((Axis)new NumberAxis(), (Axis)new NumberAxis());
+    }
+
     public StackedLineChart(@NamedArg("xAxis") Axis<X> xAxis, @NamedArg("yAxis") Axis<Y> yAxis) {
         this(xAxis, yAxis, FXCollections.<Series<X, Y>>observableArrayList());
     }
@@ -46,6 +53,7 @@ public class StackedLineChart<X,Y> extends LineChart<X,Y> {
         super(xAxis, yAxis);
         setData(data);
     }
+
 
     public double getSwimlaneHeight() {
         return swimlaneHeight;

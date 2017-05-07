@@ -12,10 +12,9 @@ public class AddToQueue implements Runnable {
     private Executor executor;
     private int tick;
 
-    public AddToQueue(ArrayList<ConcurrentLinkedQueue<Double>> data, Executor executor, int tick) {
+    public AddToQueue(ArrayList<ConcurrentLinkedQueue<Double>> data, Executor executor) {
         this.data = data;
         this.executor = executor;
-        this.tick = tick;
     }
     public void run() {
         try {
@@ -23,10 +22,9 @@ public class AddToQueue implements Runnable {
             for (ConcurrentLinkedQueue<Double> dataQ : data) {
                 // add a item of random data to queue
                 dataQ.add(Math.random());
-                Thread.sleep(tick);
                 executor.execute(this);
             }
-        } catch (InterruptedException ex) {
+        } catch (Exception ex) {
             Logger.getLogger(AddToQueue.class.getName()).log(Level.SEVERE, null, ex);
         }
     }

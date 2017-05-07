@@ -6,30 +6,28 @@
 <?import javafx.geometry.*?>
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.layout.GridPane?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
 
 <StackPane fx:id="main" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.Controller">
     <children>
-        <AnchorPane fx:id="anchorPane" minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-            <children>
-            <LineChart fx:id="lineChart" layoutX="150.0" layoutY="14.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="20.0" AnchorPane.topAnchor="10.0">
+      <VBox fx:id="vBox" prefHeight="200.0" prefWidth="100.0">
+         <children>
+                <LineChart fx:id="lineChart1">
+                    <xAxis>
+                        <NumberAxis fx:id="xAxis1" label="Time" side="BOTTOM" />
+                    </xAxis>
+                    <yAxis>
+                        <NumberAxis fx:id="yAxis1" side="LEFT" />
+                    </yAxis>
+                </LineChart>
+            <LineChart fx:id="lineChart2">
               <xAxis>
-                <NumberAxis fx:id="xAxis" side="BOTTOM" label="Time"/>
+                <NumberAxis fx:id="xAxis2" label="Time" side="BOTTOM" />
               </xAxis>
               <yAxis>
-                <NumberAxis fx:id="yAxis" side="LEFT" />
+                <NumberAxis fx:id="yAxis2" side="LEFT" />
               </yAxis>
             </LineChart>
-                <ToolBar fx:id="toolBar" layoutY="337.0" prefHeight="37.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
-                    <items>
-                        <Button fx:id="button" mnemonicParsing="false" text="Go!" />
-                    </items>
-                </ToolBar>
-                <Canvas fx:id="canvas" layoutX="150.0" layoutY="14.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="20.0" AnchorPane.topAnchor="10.0" />
-            </children>
-        </AnchorPane>
+         </children>
+      </VBox>
     </children>
 </StackPane>
