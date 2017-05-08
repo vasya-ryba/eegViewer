@@ -2,20 +2,22 @@ package sample;
 
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
 import javafx.scene.layout.VBox;
-
+import org.jtransforms.fft.DoubleFFT_1D;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.ResourceBundle;
 import java.util.Scanner;
-import java.util.concurrent.ExecutorService;
 
 public class Controller implements Initializable {
 
@@ -39,94 +41,52 @@ public class Controller implements Initializable {
     @FXML
     private NumberAxis yAxis2;
 
-    private GraphicsContext gc;
     private static Scanner in;
     public int n_channels;
-    private Drawer drawer;
-    private final int MAX_DATA_POINTS = 50;
-    private int xSeriesData = 0;
-    private ExecutorService executor;
-    private final int tick = 50;
 
     private ArrayList<ArrayList<Double>> values = new ArrayList<>();
     private ArrayList<ArrayList<Double>> average = new ArrayList<>();
-    private int window = 50;
+    private int window = 10;
+    private int begin = 2000;
+    private int end = 2200;
+
+    Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-/*
-        vBox.widthProperty().addListener(new ChangeListener<Number>() {
-            @Override
-            public void changed(ObservableValue<? extends Number> observableValue, Number oldSceneWidth, Number newSceneWidth) {
-                lineChart1.setMaxWidth((newSceneWidth.doubleValue() - 40)/2);
-            }
-        });
-        vBox.heightProperty().addListener(new ChangeListener<Number>() {
-            @Override
-            public void changed(ObservableValue<? extends Number> observableValue, Number oldSceneHeight, Number newSceneHeight) {
-                lineChart1.setMaxHeight((newSceneHeight.doubleValue() - 60)/2);
-            }
-        });
-*/
+
         initValues();
         countAverage();
         n_channels = 2;
         initChart();
-/*
-        //-- Prepare Executor Services
-        executor = Executors.newCachedThreadPool();
-        AddToQueue addToQueue = new AddToQueue(data, executor);
-        executor.execute(addToQueue);
-        //-- Prepare Timeline
-        prepareTimeline();
-        */
-
-    }
-/*
-    private void addDataToSeries() {
-        XYChart.Series series;
-        ConcurrentLinkedQueue<Double> dataQ;
-        for (int j = 0; j < n_channels; j++) {
-            series = lineChart.getData().get(j);
-            dataQ = data.get(j);
-            for (int i = 0; i < 20; i++) { //-- add 20 numbers to the plot+
-                if (dataQ.isEmpty()) break;
-                series.getData().add(new LineChart.Data(xSeriesData++, dataQ.remove()));
+        double[] spectrum1 = getSpectrum(values.get(0).subList(begin, end).stream().mapToDouble(i -> i).toArray());
+        try {
+            PrintWriter out = new PrintWriter(new File("./src/main/resources/spectrum1.txt"));
+            for (double d : spectrum1) {
+                out.println(d + " ");
             }
-            // remove points to keep us at no more than MAX_DATA_POINTS
-            if (series.getData().size() > MAX_DATA_POINTS) {
-                series.getData().remove(0, series.getData().size() - MAX_DATA_POINTS);
-            }
+            out.flush();
+            logger.info("Wrote spectrum 1 to file");
+        } catch (IOException e) {
+            logger.error("Failed to create or write spectrum file");
         }
-        // update
-        xAxis.setLowerBound(xSeriesData-MAX_DATA_POINTS);
-        xAxis.setUpperBound(xSeriesData-1);
+    }
+    
+    private double[] getSpectrum(double[] input) {
+        DoubleFFT_1D fft_1D = new DoubleFFT_1D(input.length);
+        double[] fft = new double[input.length * 2];
+        System.arraycopy(input, 0, fft, 0, input.length);
+        fft_1D.realForwardFull(fft);
+        return fft;
     }
 
-    //-- Timeline gets called in the JavaFX Main thread
-    private void prepareTimeline() {
-        // Every frame to take any data from queue and add to chart
-        new AnimationTimer() {
-            private long lastUpdate = 0;
-
-            @Override
-            public void handle(long now) {
-                if (now - lastUpdate >= 50_000_000) {
-                    addDataToSeries();
-                    lastUpdate = now;
-                }
-            }
-        }.start();
-    }
-*/
     private void initValues() {
 
-        File f = new File("./data/D0000003.txt");
+        File f = new File("./src/main/resources/data/D0000003.txt");
         try {
             in = new Scanner(f);
         } catch (FileNotFoundException e) {
-            e.getMessage();
-            //logger here
+            logger.error("Data file not found: " + f.getPath());
         }
 
         if (in.hasNext()) {
@@ -147,7 +107,7 @@ public class Controller implements Initializable {
             }
         }
 
-        System.out.println("channels " + n_channels);
+        logger.info("channels " + n_channels);
     }
 
     private void countAverage() {
@@ -171,17 +131,11 @@ public class Controller implements Initializable {
     }
 
     private void initChart() {
-        /*xAxis.setLowerBound(0);
-        xAxis.setUpperBound(MAX_DATA_POINTS);
-        xAxis.setTickUnit(MAX_DATA_POINTS / 10);
-        xAxis.setForceZeroInRange(false);*/
         xAxis1.setAutoRanging(false);
         yAxis1.setAutoRanging(true);
         xAxis2.setAutoRanging(false);
         yAxis2.setAutoRanging(true);
 
-        int begin = 2000;
-        int end = 2200;
         xAxis1.setLowerBound(begin);
         xAxis1.setUpperBound(end);
         xAxis2.setLowerBound(begin);
