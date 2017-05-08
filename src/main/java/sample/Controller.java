@@ -7,6 +7,7 @@ import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
 import javafx.scene.layout.VBox;
+import org.jtransforms.dct.DoubleDCT_1D;
 import org.jtransforms.fft.DoubleFFT_1D;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +49,7 @@ public class Controller implements Initializable {
     private ArrayList<ArrayList<Double>> average = new ArrayList<>();
     private int window = 10;
     private int begin = 2000;
-    private int end = 2200;
+    private int end = 3000;
 
     Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -61,7 +62,7 @@ public class Controller implements Initializable {
         initChart();
         double[] spectrum1 = getSpectrum(values.get(0).subList(begin, end).stream().mapToDouble(i -> i).toArray());
         try {
-            PrintWriter out = new PrintWriter(new File("./src/main/resources/spectrum1.txt"));
+            PrintWriter out = new PrintWriter(new File("./src/main/resources/spectrum_output/spectrum2000-3000.txt"));
             for (double d : spectrum1) {
                 out.println(d + " ");
             }
@@ -73,16 +74,17 @@ public class Controller implements Initializable {
     }
 
     private double[] getSpectrum(double[] input) {
-        DoubleFFT_1D fft_1D = new DoubleFFT_1D(input.length);
-        double[] fft = new double[input.length * 2];
-        System.arraycopy(input, 0, fft, 0, input.length);
-        fft_1D.realForwardFull(fft);
-        double[] spectrum = new double[input.length];
-        spectrum[0] = fft[0];
-        for (int k = 1; k < fft.length/2; k++) {
-            spectrum[k] = Math.sqrt(fft[2*k] * fft[2*k] + fft[2*k+1] * fft[2*k+1]);
-        }
-        return spectrum;
+        DoubleDCT_1D fft_1D = new DoubleDCT_1D(input.length);
+        //double[] fft = new double[input.length * 2];
+        //System.arraycopy(input, 0, fft, 0, input.length);
+        //fft_1D.realForwardFull(fft);
+        fft_1D.forward(input, false);
+        /*double[] spectrum = new double[input.length];
+        spectrum[0] = input[0];
+        for (int k = 1; k < input.length/2; k++) {
+            spectrum[k] = Math.sqrt(input[2*k] * input[2*k] + input[2*k+1] * input[2*k+1]);
+        }*/
+        return input;
     }
 
     private void initValues() {
