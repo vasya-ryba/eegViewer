@@ -66,18 +66,23 @@ public class Controller implements Initializable {
                 out.println(d + " ");
             }
             out.flush();
-            logger.info("Wrote spectrum 1 to file");
+            logger.info("Wrote spectrum 1 to file, " + spectrum1.length + " numbers");
         } catch (IOException e) {
             logger.error("Failed to create or write spectrum file");
         }
     }
-    
+
     private double[] getSpectrum(double[] input) {
         DoubleFFT_1D fft_1D = new DoubleFFT_1D(input.length);
         double[] fft = new double[input.length * 2];
         System.arraycopy(input, 0, fft, 0, input.length);
         fft_1D.realForwardFull(fft);
-        return fft;
+        double[] spectrum = new double[input.length];
+        spectrum[0] = fft[0];
+        for (int k = 1; k < fft.length/2; k++) {
+            spectrum[k] = Math.sqrt(fft[2*k] * fft[2*k] + fft[2*k+1] * fft[2*k+1]);
+        }
+        return spectrum;
     }
 
     private void initValues() {
