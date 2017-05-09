@@ -2,6 +2,7 @@ package sample;
 
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.chart.BarChart;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
@@ -47,9 +48,10 @@ public class Controller implements Initializable {
 
     private ArrayList<ArrayList<Double>> values = new ArrayList<>();
     private ArrayList<ArrayList<Double>> average = new ArrayList<>();
+    private double[] spectrum1;
     private int window = 10;
     private int begin = 2000;
-    private int end = 3000;
+    private int end = 2200;
 
     Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -59,10 +61,9 @@ public class Controller implements Initializable {
         initValues();
         countAverage();
         n_channels = 2;
-        initChart();
-        double[] spectrum1 = getSpectrum(values.get(0).subList(begin, end).stream().mapToDouble(i -> i).toArray());
+        spectrum1 = getSpectrum(values.get(0).subList(begin, end).stream().mapToDouble(i -> i).toArray());
         try {
-            PrintWriter out = new PrintWriter(new File("./src/main/resources/spectrum_output/spectrum2000-3000.txt"));
+            PrintWriter out = new PrintWriter(new File("./src/main/resources/spectrum_output/spectrum2000-2200.txt"));
             for (double d : spectrum1) {
                 out.println(d + " ");
             }
@@ -71,20 +72,21 @@ public class Controller implements Initializable {
         } catch (IOException e) {
             logger.error("Failed to create or write spectrum file");
         }
+        initChart();
     }
 
     private double[] getSpectrum(double[] input) {
-        DoubleDCT_1D fft_1D = new DoubleDCT_1D(input.length);
+        DoubleFFT_1D fft_1D = new DoubleFFT_1D(input.length);
         //double[] fft = new double[input.length * 2];
         //System.arraycopy(input, 0, fft, 0, input.length);
         //fft_1D.realForwardFull(fft);
-        fft_1D.forward(input, false);
-        /*double[] spectrum = new double[input.length];
+        fft_1D.realForward(input);
+        double[] spectrum = new double[input.length/2];
         spectrum[0] = input[0];
         for (int k = 1; k < input.length/2; k++) {
             spectrum[k] = Math.sqrt(input[2*k] * input[2*k] + input[2*k+1] * input[2*k+1]);
-        }*/
-        return input;
+        }
+        return spectrum;
     }
 
     private void initValues() {
@@ -140,13 +142,14 @@ public class Controller implements Initializable {
     private void initChart() {
         xAxis1.setAutoRanging(false);
         yAxis1.setAutoRanging(true);
-        xAxis2.setAutoRanging(false);
+        //xAxis2.setAutoRanging(false);
+        xAxis2.setAutoRanging(true);
         yAxis2.setAutoRanging(true);
 
         xAxis1.setLowerBound(begin);
         xAxis1.setUpperBound(end);
-        xAxis2.setLowerBound(begin);
-        xAxis2.setUpperBound(end);
+        //xAxis2.setLowerBound(begin);
+        //xAxis2.setUpperBound(end);
 
         lineChart1.setAnimated(false);
         int i = 0;
@@ -162,7 +165,7 @@ public class Controller implements Initializable {
         lineChart1.getData().add(seriesAvg);
 
         lineChart2.setAnimated(false);
-        i = 1;
+        /*i = 1;
         XYChart.Series series2 = new LineChart.Series<Double, Double>();
         XYChart.Series series2Avg = new LineChart.Series<Double, Double>();
         series2.setName((i + 1) + " channel");
@@ -172,7 +175,13 @@ public class Controller implements Initializable {
             series2Avg.getData().add(new XYChart.Data(j, average.get(i).get(j)));
         }
         lineChart2.getData().add(series2);
-        lineChart2.getData().add(series2Avg);
+        lineChart2.getData().add(series2Avg);*/
 
+        XYChart.Series series2 = new LineChart.Series<Double, Double>();
+        series2.setName("Amplitude graph for channel " + (i + 1));
+        for (int j = 0; j < spectrum1.length; j++) {
+            series2.getData().add(new XYChart.Data(j, spectrum1[j]));
+        }
+        lineChart2.getData().add(series2);
     }
 }

@@ -19,7 +19,7 @@ public class Main extends Application {
         Scene scene = new Scene(page, 1040, 900);
         primaryStage.setTitle("eeg viewer");
         primaryStage.setScene(scene);
-        //primaryStage.show();
+        primaryStage.show();
         //primaryStage.setResizable(true);
     }
 
